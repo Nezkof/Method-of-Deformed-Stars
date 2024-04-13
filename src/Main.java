@@ -1,4 +1,5 @@
 import java.util.Arrays;
+import java.util.Random;
 
 public class Main {
     public static void main(String[] args) {
@@ -12,12 +13,12 @@ public class Main {
 
 
         int populationSize = 10;
-        int compressionCoefficient = 2;
+        int compressionCoefficient = 4;
         int iterNumbers = 30;
         double populationDistance = 0;
         double populationValuesDistance = 0;
 
-        DeformedStarsMethod algorithm = new DeformedStarsMethod(populationSize, compressionCoefficient, iterNumbers, populationDistance, populationValuesDistance, functionsBounds[0], functions[0]);
+        DeformedStarsMethod algorithm = new DeformedStarsMethod(populationSize, compressionCoefficient, iterNumbers, populationDistance, populationValuesDistance, functionsBounds[1], functions[1]);
         algorithm.startOptimization();
 
 /*        double[][] tests = new double[][] {

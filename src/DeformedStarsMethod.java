@@ -1,31 +1,29 @@
-import javax.security.auth.kerberos.KerberosTicket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.function.BinaryOperator;
 
 public class DeformedStarsMethod {
-    private ArrayList<double[]> P_population;
-    private ArrayList<Double> F_population;
+    private final ArrayList<double[]> P_population;
+    private final ArrayList<Double> F_population;
 
     private ArrayList<double[]> Pz_population;
-    private ArrayList<Double> Fz_population;
+    private final ArrayList<Double> Fz_population;
 
     private ArrayList<double[]> Ps_population;
-    private ArrayList<Double> Fs_population;
+    private final ArrayList<Double> Fs_population;
 
     private ArrayList<double[]> Pw_population;
-    private ArrayList<Double> Fw_population;
+    private final ArrayList<Double> Fw_population;
 
     int populationSize;
     int compressionCoefficient;
 
-    private int itersNumber;
-    private double populationDistance;
-    private double populationValuesDistance;
+    private final int itersNumber;
+    private final double populationDistance;
+    private final double populationValuesDistance;
 
     private final Function function;
-    private double[] bounds;
+    private final double[] bounds;
     private final Random random;
     private double bestResult;
 
@@ -53,11 +51,11 @@ public class DeformedStarsMethod {
     public void startOptimization(){
         for (int i = 0; i < itersNumber; ++i) {
             calculateFunctionValues(P_population, F_population);
-            this.Pz_population = createParallelTransferPopulation();
+            createParallelTransferPopulation();
             calculateFunctionValues(Pz_population, Fz_population);
-            this.Ps_population = createRotationPopulation();
+            createRotationPopulation();
             calculateFunctionValues(Ps_population, Fs_population);
-            this.Pw_population = createCompressionPopulation();
+            createCompressionPopulation();
             calculateFunctionValues(Pw_population, Fw_population);
             selectBestPopulation();
             System.out.println(bestResult);
@@ -82,18 +80,21 @@ public class DeformedStarsMethod {
         }
     }
 
-    private ArrayList<double[]> createParallelTransferPopulation() {
-        ArrayList<double[]> population = new ArrayList<>();
+    private void createParallelTransferPopulation() {
+        Pz_population.clear();
+        Fz_population.clear();
 
         for (int individ = 0; individ < P_population.size(); ++individ) {
-            int i = random.nextInt(P_population.size());
-            int j;
-            double a = random.nextDouble(bounds[1]/2.0);
-            double alpha = Math.toRadians(random.nextDouble(180));
+            int i, j;
+            double a, alpha;
 
             do {
+                i = random.nextInt(P_population.size());
                 j = random.nextInt(P_population.size());
             } while (j == i);
+
+            a = random.nextDouble() * (bounds[1] - bounds[0]) + bounds[0];
+            alpha = random.nextDouble() * 2 * Math.PI;
 
             double[] firstPoint = P_population.get(i);
             double[] secondPoint = P_population.get(j);
@@ -108,91 +109,76 @@ public class DeformedStarsMethod {
 
             secondPoint = validatePoint(secondPoint);
 
-            double firstPointValue = function.calculate(firstPoint[0], firstPoint[1]);
-            double secondPointValue = function.calculate(secondPoint[0], secondPoint[0]);
-
-            if (firstPointValue > secondPointValue)
-                population.add(secondPoint);
-            else
-                population.add(firstPoint);
-
+            Pz_population.add(function.calculate(firstPoint[0], firstPoint[1]) < function.calculate(secondPoint[0], secondPoint[1]) ? firstPoint : secondPoint);
         }
-
-        return population;
     }
 
-    private ArrayList<double[]> createRotationPopulation() {
-        ArrayList<double[]> population = new ArrayList<>();
+    private void createRotationPopulation() {
+        Ps_population.clear();
+        Fs_population.clear();
 
         for (int individ = 0; individ < P_population.size(); ++individ) {
-            int i = random.nextInt(P_population.size());
-            int j;
-            double beta = Math.toRadians(random.nextDouble(360));
+            int i, j;
+            double beta;
 
             do {
+                i = random.nextInt(P_population.size());
+                j = random.nextInt(P_population.size());
+            } while (j == i);
+
+            beta = Math.toRadians(random.nextDouble(360));
+
+            double[] firstPoint = P_population.get(i);
+            double[] secondPoint = P_population.get(j);
+
+            double xDiff = secondPoint[0] - firstPoint[0];
+            double yDiff = secondPoint[1] - firstPoint[1];
+
+            double newX = secondPoint[0] + xDiff * Math.cos(beta) - yDiff * Math.sin(beta);
+            double newY = secondPoint[1] + xDiff * Math.sin(beta) + yDiff * Math.cos(beta);
+
+            secondPoint[0] = newX;
+            secondPoint[1] = newY;
+
+            firstPoint = validatePoint(firstPoint);
+            secondPoint = validatePoint(secondPoint);
+
+            Ps_population.add(function.calculate(firstPoint[0], firstPoint[1]) > function.calculate(secondPoint[0], secondPoint[1]) ? secondPoint : firstPoint);
+        }
+    }
+
+
+    private void createCompressionPopulation() {
+        Pw_population.clear();
+        Fw_population.clear();
+
+        for (int individ = 0; individ < P_population.size(); ++individ) {
+            int i, j;
+
+            do {
+                i = random.nextInt(P_population.size());
                 j = random.nextInt(P_population.size());
             } while (j == i);
 
             double[] firstPoint = P_population.get(i);
             double[] secondPoint = P_population.get(j);
 
-            if (function.calculate(firstPoint[0], firstPoint[1]) > function.calculate(secondPoint[0], secondPoint[0])) {
-                secondPoint[0] += (secondPoint[0] - firstPoint[0])*Math.cos(beta) - (secondPoint[1] - firstPoint[1])*Math.sin(beta);
-                beta = Math.toRadians(random.nextDouble(360));
-                secondPoint[0] += (secondPoint[0] - firstPoint[0])*Math.sin(beta) - (secondPoint[1] - firstPoint[1])*Math.cos(beta);
-            }
-            else {
-                firstPoint[0] += (firstPoint[0] - secondPoint[0])*Math.cos(beta) - (firstPoint[1] - secondPoint[1])*Math.sin(beta);
-                beta = Math.toRadians(random.nextDouble(360));
-                firstPoint[0] += (firstPoint[0] - secondPoint[0])*Math.sin(beta) - (firstPoint[1] - secondPoint[1])*Math.cos(beta);
+            if (function.calculate(firstPoint[0], firstPoint[1]) < function.calculate(secondPoint[0], secondPoint[1])) {
+                secondPoint[0] = (secondPoint[0] + firstPoint[0]) / compressionCoefficient;
+                secondPoint[1] = (secondPoint[1] + firstPoint[1]) / compressionCoefficient;
+            } else {
+                firstPoint[0] = (firstPoint[0] + secondPoint[0]) / compressionCoefficient;
+                firstPoint[1] = (firstPoint[1] + secondPoint[1]) / compressionCoefficient;
             }
 
             firstPoint = validatePoint(firstPoint);
             secondPoint = validatePoint(secondPoint);
 
-            if (function.calculate(firstPoint[0], firstPoint[1]) > function.calculate(secondPoint[0], secondPoint[0]))
-                population.add(secondPoint);
-            else
-                population.add(firstPoint);
+            Pw_population.add(function.calculate(firstPoint[0], firstPoint[1]) > function.calculate(secondPoint[0], secondPoint[1]) ? secondPoint : firstPoint);
         }
-
-        return population;
-    };
-
-    private ArrayList<double[]> createCompressionPopulation() {
-        ArrayList<double[]> population = new ArrayList<>();
-
-        for (int individ = 0; individ < P_population.size(); ++individ) {
-            int i = random.nextInt(P_population.size());
-            int j;
-
-            do {
-                j = random.nextInt(P_population.size());
-            } while (j == i);
-
-            double[] firstPoint = P_population.get(i);
-            double[] secondPoint = P_population.get(j);
-
-            if (function.calculate(firstPoint[0], firstPoint[1]) < function.calculate(secondPoint[0], secondPoint[0])) {
-                secondPoint[0] = (secondPoint[0] + firstPoint[0])/compressionCoefficient;
-                secondPoint[1] = (secondPoint[1] + firstPoint[1])/compressionCoefficient;
-            }
-            else {
-                firstPoint[0] = (firstPoint[0] + secondPoint[0])/compressionCoefficient;
-                firstPoint[1] = (firstPoint[1] + secondPoint[1])/compressionCoefficient;
-            }
-
-            firstPoint = validatePoint(firstPoint);
-            secondPoint = validatePoint(secondPoint);
-
-            if (function.calculate(firstPoint[0], firstPoint[1]) > function.calculate(secondPoint[0], secondPoint[0]))
-                population.add(secondPoint);
-            else
-                population.add(firstPoint);
-        }
-
-        return population;
     }
+
+
 
     private void selectBestPopulation() {
         ArrayList<double[]> combinedPopulation = new ArrayList<>();
