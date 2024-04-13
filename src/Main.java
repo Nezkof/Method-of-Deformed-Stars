@@ -1,6 +1,3 @@
-import java.util.Arrays;
-import java.util.Random;
-
 public class Main {
     public static void main(String[] args) {
         Function[] functions = new Function[] {
@@ -11,31 +8,13 @@ public class Main {
         double[][] functionsBounds ={ {-5.12, 5.12}, {-10, 10}, {-5, 5} };
         double[][] tableArguments = { {0,0}, {1,1}, {-2.903534,-2.903534}};
 
-
         int populationSize = 10;
-        int compressionCoefficient = 4;
+        int compressionCoefficient = 2;
         int iterNumbers = 30;
         double populationDistance = 0;
         double populationValuesDistance = 0;
 
-        DeformedStarsMethod algorithm = new DeformedStarsMethod(populationSize, compressionCoefficient, iterNumbers, populationDistance, populationValuesDistance, functionsBounds[1], functions[1]);
+        DeformedStarsMethod algorithm = new DeformedStarsMethod(populationSize, compressionCoefficient, iterNumbers, populationDistance, populationValuesDistance, functionsBounds[2], functions[2]);
         algorithm.startOptimization();
-
-/*        double[][] tests = new double[][] {
-                {2.5, 2.5},
-                {-1, -1},
-                {-1, 2.5},
-                {-1, 6},
-                {2.5, 6},
-                {6, 6},
-                {6,2.5},
-                {6, -1},
-                {2.5, -1}
-        };
-
-        for (var test : tests){
-            algorithm.validatePoint(test, new double[] {0,5});
-            System.out.println(Arrays.toString(test));
-        }*/
     }
 }

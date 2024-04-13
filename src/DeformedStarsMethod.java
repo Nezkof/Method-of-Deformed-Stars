@@ -96,8 +96,14 @@ public class DeformedStarsMethod {
             a = random.nextDouble() * (bounds[1] - bounds[0]) + bounds[0];
             alpha = random.nextDouble() * 2 * Math.PI;
 
-            double[] firstPoint = P_population.get(i);
-            double[] secondPoint = P_population.get(j);
+
+            double[] firstPoint = new double[2];
+            firstPoint[0] = P_population.get(i)[0];
+            firstPoint[1] = P_population.get(i)[1];
+
+            double[] secondPoint = new double[2];
+            secondPoint[0] = P_population.get(j)[0];
+            secondPoint[1] = P_population.get(j)[1];
 
             firstPoint[0] += a * Math.cos(alpha);
             firstPoint[1] += a * Math.sin(alpha);
@@ -128,8 +134,13 @@ public class DeformedStarsMethod {
 
             beta = Math.toRadians(random.nextDouble(360));
 
-            double[] firstPoint = P_population.get(i);
-            double[] secondPoint = P_population.get(j);
+            double[] firstPoint = new double[2];
+            firstPoint[0] = P_population.get(i)[0];
+            firstPoint[1] = P_population.get(i)[1];
+
+            double[] secondPoint = new double[2];
+            secondPoint[0] = P_population.get(j)[0];
+            secondPoint[1] = P_population.get(j)[1];
 
             double xDiff = secondPoint[0] - firstPoint[0];
             double yDiff = secondPoint[1] - firstPoint[1];
@@ -160,8 +171,13 @@ public class DeformedStarsMethod {
                 j = random.nextInt(P_population.size());
             } while (j == i);
 
-            double[] firstPoint = P_population.get(i);
-            double[] secondPoint = P_population.get(j);
+            double[] firstPoint = new double[2];
+            firstPoint[0] = P_population.get(i)[0];
+            firstPoint[1] = P_population.get(i)[1];
+
+            double[] secondPoint = new double[2];
+            secondPoint[0] = P_population.get(j)[0];
+            secondPoint[1] = P_population.get(j)[1];
 
             if (function.calculate(firstPoint[0], firstPoint[1]) < function.calculate(secondPoint[0], secondPoint[1])) {
                 secondPoint[0] = (secondPoint[0] + firstPoint[0]) / compressionCoefficient;
