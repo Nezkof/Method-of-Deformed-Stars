@@ -8,13 +8,39 @@ public class Main {
         double[][] functionsBounds ={ {-5.12, 5.12}, {-10, 10}, {-5, 5} };
         double[][] tableArguments = { {0,0}, {1,1}, {-2.903534,-2.903534}};
 
-        int populationSize = 10;
-        int compressionCoefficient = 2;
-        int iterNumbers = 30;
-        double populationDistance = 0;
+        int[] populationSize = new int[] {10, 20 ,30};
+        int[] compressionCoefficient =  new int[] {2,3,4};
+        int iterNumbers = 0;
+        double populationDistance = 0.000001;
         double populationValuesDistance = 0;
 
-        DeformedStarsMethod algorithm = new DeformedStarsMethod(populationSize, compressionCoefficient, iterNumbers, populationDistance, populationValuesDistance, functionsBounds[2], functions[2]);
-        algorithm.startOptimization();
+        for (int i = 0; i < functions.length; ++i) {
+            System.out.println("=====================================================================");
+            System.out.print("\t\t\t\t\tTesting for <");
+            switch (i) {
+                case 0:
+                    System.out.print("Rastrigin function");
+                    break;
+                case 1:
+                    System.out.print("Levy 13 function");
+                    break;
+                case 2:
+                    System.out.print("Stibinski-Tanga function");
+                    break;
+            }
+            System.out.println(">");
+            System.out.println("---------------------------------------------------------------------");
+            System.out.printf("%17s%17s%18s%17s\n", "Precision", "Duration", "Result", "Error");
+            for (int j = 0; j < 3; ++j) {
+                DeformedStarsMethod algorithm = new DeformedStarsMethod(populationSize[2], compressionCoefficient[0], iterNumbers, populationDistance, populationValuesDistance, functionsBounds[i], functions[i]);
+                algorithm.startOptimization();
+                System.out.printf("%17s%17.5s%18.7f%17.7f\n", algorithm.getPopulationDistance(), algorithm.getDuration() + "ms", algorithm.getBestResult(), getError(algorithm.getBestResult(), functions[i].calculate(tableArguments[i][0], tableArguments[i][1])));
+
+            }
+        }
     }
+
+    public static double getError(double bestScore, double tableValue){
+        return bestScore - tableValue;
+    };
 }

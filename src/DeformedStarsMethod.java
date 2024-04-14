@@ -1,19 +1,11 @@
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 public class DeformedStarsMethod {
     private final ArrayList<double[]> P_population;
-    private final ArrayList<Double> F_population;
-
     private ArrayList<double[]> Pz_population;
-    private final ArrayList<Double> Fz_population;
-
     private ArrayList<double[]> Ps_population;
-    private final ArrayList<Double> Fs_population;
-
     private ArrayList<double[]> Pw_population;
-    private final ArrayList<Double> Fw_population;
 
     int populationSize;
     int compressionCoefficient;
@@ -25,7 +17,11 @@ public class DeformedStarsMethod {
     private final Function function;
     private final double[] bounds;
     private final Random random;
+    private long duration;
+    private double avgResult = Double.MAX_VALUE;
     private double bestResult;
+    private double oldAvgResult = 0;
+
 
     public DeformedStarsMethod(int populationSize, int compressionCoefficient, int itersNumber, double populationDistance, double populationValuesDistance, double[] bounds,Function function){
         this.random = new Random();
@@ -37,29 +33,47 @@ public class DeformedStarsMethod {
         this.bounds = bounds;
 
         this.P_population = createPopulation();
-        this.F_population = new ArrayList<>();
         this.Pz_population = new ArrayList<>();
-        this.Fz_population = new ArrayList<>();
         this.Ps_population = new ArrayList<>();
-        this.Fs_population = new ArrayList<>();
         this.Pw_population = new ArrayList<>();
-        this.Fw_population = new ArrayList<>();
 
         this.function = function;
     }
 
-    public void startOptimization(){
-        for (int i = 0; i < itersNumber; ++i) {
-            calculateFunctionValues(P_population, F_population);
-            createParallelTransferPopulation();
-            calculateFunctionValues(Pz_population, Fz_population);
-            createRotationPopulation();
-            calculateFunctionValues(Ps_population, Fs_population);
-            createCompressionPopulation();
-            calculateFunctionValues(Pw_population, Fw_population);
-            selectBestPopulation();
-            System.out.println(bestResult);
+    public void startOptimization() {
+        long startTime = System.currentTimeMillis();
+
+        if (itersNumber != 0) {
+            for (int i = 0; i < itersNumber; ++i) {
+                createParallelTransferPopulation();
+                createRotationPopulation();
+                createCompressionPopulation();
+                selectBestPopulation();
+            }
+        } else
+        if (populationDistance != 0) {
+            while(Math.abs(getIndividsDistance()) > populationDistance){
+                createParallelTransferPopulation();
+                createRotationPopulation();
+                createCompressionPopulation();
+                selectBestPopulation();
+            }
+        } else
+        if (populationValuesDistance != 0) {
+            while(Math.abs(oldAvgResult - avgResult) > populationValuesDistance) {
+                oldAvgResult = avgResult;
+                createParallelTransferPopulation();
+                createRotationPopulation();
+                createCompressionPopulation();
+                selectBestPopulation();
+            }
         }
+
+        duration = System.currentTimeMillis() - startTime;
+    }
+
+    private double getIndividsDistance() {
+        return Math.sqrt(Math.pow(P_population.get(0)[0] - P_population.get(1)[0],2) + Math.pow(P_population.get(0)[1] - P_population.get(1)[1],2));
     }
 
     private ArrayList<double[]> createPopulation() {
@@ -74,15 +88,8 @@ public class DeformedStarsMethod {
         return population;
     }
 
-    private void calculateFunctionValues(ArrayList<double[]> population, ArrayList<Double> results) {
-        for (double[] doubles : population) {
-            results.add(function.calculate(doubles[0], doubles[1]));
-        }
-    }
-
     private void createParallelTransferPopulation() {
         Pz_population.clear();
-        Fz_population.clear();
 
         for (int individ = 0; individ < P_population.size(); ++individ) {
             int i, j;
@@ -121,7 +128,6 @@ public class DeformedStarsMethod {
 
     private void createRotationPopulation() {
         Ps_population.clear();
-        Fs_population.clear();
 
         for (int individ = 0; individ < P_population.size(); ++individ) {
             int i, j;
@@ -158,10 +164,8 @@ public class DeformedStarsMethod {
         }
     }
 
-
     private void createCompressionPopulation() {
         Pw_population.clear();
-        Fw_population.clear();
 
         for (int individ = 0; individ < P_population.size(); ++individ) {
             int i, j;
@@ -194,8 +198,6 @@ public class DeformedStarsMethod {
         }
     }
 
-
-
     private void selectBestPopulation() {
         ArrayList<double[]> combinedPopulation = new ArrayList<>();
         combinedPopulation.addAll(P_population);
@@ -208,7 +210,17 @@ public class DeformedStarsMethod {
         P_population.clear();
         P_population.addAll(combinedPopulation.subList(0, populationSize));
 
-        this.bestResult = function.calculate(P_population.get(0)[0], P_population.get(0)[1]);
+        evaluateAvgPopulationScore();
+        bestResult = function.calculate(P_population.get(0)[0], P_population.get(0)[1]);
+
+    }
+
+    public void evaluateAvgPopulationScore() {
+        avgResult = 0;
+        for (var individ : P_population){
+            avgResult += function.calculate(individ[0], individ[1]);
+        }
+        avgResult /= P_population.size();
     }
     public double[] validatePoint(double[] point) {
         if (point[0] < bounds[0] && point[1] < bounds[0]) {
@@ -247,4 +259,30 @@ public class DeformedStarsMethod {
 
         return point;
     }
+
+    public int getPopulationSize() {
+        return populationSize;
+    }
+
+    public long getDuration(){
+        return duration;
+    }
+
+    public double getAvgResult() {
+        return avgResult;
+    }
+
+    public int getCompressionCoefficient() {
+        return compressionCoefficient;
+    }
+
+    public double getPopulationDistance() {
+        return populationDistance;
+    }
+
+    public double getPopulationValuesDistance() {
+        return populationValuesDistance;
+    }
+
+    public double getBestResult() {return bestResult;}
 }
